@@ -23,10 +23,10 @@ jobs:
         run: make lint
       - name: Run build
         run: |
-          GOOS=linux GOARCH=amd64 go build -o build/${BINARY_NAME}-linux-amd64 proxy.go
-          GOOS=linux GOARCH=arm64 go build -o build/${BINARY_NAME}-linux-arm64 proxy.go
-          GOOS=windows go build -o build/${BINARY_NAME}-windows-amd64.exe proxy.go
-          GOOS=darwin go build -o build/${BINARY_NAME}-darwin-amd64 proxy.go
+          GOOS=linux GOARCH=amd64 go build -o build/${BINARY_NAME}-linux-amd64 ${BINARY_NAME}.go
+          GOOS=linux GOARCH=arm64 go build -o build/${BINARY_NAME}-linux-arm64 ${BINARY_NAME}.go
+          GOOS=windows go build -o build/${BINARY_NAME}-windows-amd64.exe ${BINARY_NAME}.go
+          GOOS=darwin go build -o build/${BINARY_NAME}-darwin-amd64 ${BINARY_NAME}.go
       - name: Create artifacts
         uses: actions/upload-artifact@v2
         with:
