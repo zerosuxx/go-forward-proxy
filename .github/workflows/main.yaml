@@ -21,8 +21,6 @@ jobs:
         run: make install
       - name: Run lint check
         run: make lint
-      - name: Run tests
-        run: make test
       - name: Run build
         run: |
           GOOS=linux GOARCH=amd64 go build -o build/${BINARY_NAME}-linux-amd64 proxy.go
