@@ -13,7 +13,7 @@ build: ## Build the application
 	go build -o build/forward-proxy-bin forward-proxy.go
 
 run: ## Run the application
-	go run proxy.go -v
+	go run forward-proxy.go -v
 
 lint: ## Check lint errors
 	staticcheck ./...
