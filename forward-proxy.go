@@ -7,10 +7,10 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/zerosuxx/go-escher-proxy/pkg/config"
 	"github.com/zerosuxx/go-escher-proxy/pkg/handler"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+        "io"
 	"os"
 	"strconv"
 )
@@ -18,7 +18,7 @@ import (
 type AppConfig struct {
 	Hosts         map[string]HostConfig
 	ListenAddress string
-	TargetUrl 	  string
+	TargetUrl     string
 	Verbose       bool
 }
 
@@ -65,7 +65,7 @@ func readFromFile(file string) []byte {
 		return []byte("")
 	}
 
-	jsonData, _ := ioutil.ReadAll(jsonFile)
+	jsonData, _ := io.ReadAll(jsonFile)
 
 	return jsonData
 }
