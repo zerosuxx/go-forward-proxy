@@ -7,10 +7,10 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/zerosuxx/go-escher-proxy/pkg/config"
 	"github.com/zerosuxx/go-escher-proxy/pkg/handler"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
-        "io"
 	"os"
 	"strconv"
 )
@@ -96,8 +96,9 @@ func patchRequest(request *http.Request, config *HostConfig) {
 	}
 }
 
+var Version = "development"
+
 func main() {
-	const VERSION = "0.1.0"
 	const configFileName = "forward-proxy-config.json"
 
 	appConfig := AppConfig{}
@@ -163,6 +164,6 @@ func main() {
 		return request, nil
 	})
 
-	log.Println("F0rward Pr0xy " + VERSION + " | Listening on: " + appConfig.ListenAddress)
+	log.Println("F0rward Pr0xy " + Version + " | Listening on: " + appConfig.ListenAddress)
 	log.Fatal(http.ListenAndServe(appConfig.ListenAddress, proxy))
 }
