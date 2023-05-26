@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/elazarl/goproxy"
+	"github.com/zerosuxx/go-escher-proxy/pkg/config"
+	"github.com/zerosuxx/go-escher-proxy/pkg/handler"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,6 +18,7 @@ import (
 type AppConfig struct {
 	Hosts         map[string]HostConfig
 	ListenAddress string
+	TargetUrl 	  string
 	Verbose       bool
 }
 
@@ -26,6 +29,7 @@ type HostConfig struct {
 
 func (appConfig *AppConfig) LoadFromArgument() {
 	flag.StringVar(&appConfig.ListenAddress, "addr", "0.0.0.0:8282", "Proxy server listen address")
+	flag.StringVar(&appConfig.TargetUrl, "url", "", "Target url")
 	flag.BoolVar(&appConfig.Verbose, "v", false, "Verbose")
 
 	flag.Parse()
@@ -93,7 +97,7 @@ func patchRequest(request *http.Request, config *HostConfig) {
 }
 
 func main() {
-	const VERSION = "0.0.1"
+	const VERSION = "0.1.0"
 	const configFileName = "forward-proxy-config.json"
 
 	appConfig := AppConfig{}
@@ -105,6 +109,20 @@ func main() {
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = appConfig.Verbose
 
+	escherProxyConfig := config.AppConfig{}
+	escherProxyConfig.Verbose = appConfig.Verbose
+
+	proxy.NonproxyHandler = http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
+		webRequestHandler := handler.WebRequest{
+			AppConfig: escherProxyConfig,
+			Client:    &http.Client{},
+		}
+		if appConfig.TargetUrl != "" {
+			request.Header.Set("X-Target-Url", appConfig.TargetUrl)
+		}
+
+		webRequestHandler.Handle(request, responseWriter)
+	})
 	proxy.OnRequest().DoFunc(func(request *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		hostConfig := appConfig.FindHostConfig(request.URL.Host)
 
