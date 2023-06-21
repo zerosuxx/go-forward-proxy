@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/elazarl/goproxy"
 	"github.com/zerosuxx/go-escher-proxy/pkg/config"
 	"github.com/zerosuxx/go-escher-proxy/pkg/handler"
@@ -23,14 +22,16 @@ type AppConfig struct {
 }
 
 type HostConfig struct {
-	OverrideHost bool
-	TargetHost   string
+	OverrideScheme 	bool
+	OverrideHost 	bool
+	TargetHost   	string
+	UserAgent	 	string
 }
 
 func (appConfig *AppConfig) LoadFromArgument() {
 	flag.StringVar(&appConfig.ListenAddress, "addr", "0.0.0.0:8282", "Proxy server listen address")
 	flag.StringVar(&appConfig.TargetUrl, "url", "", "Target url")
-	flag.BoolVar(&appConfig.Verbose, "v", false, "Verbose")
+	flag.BoolVar(&appConfig.Verbose, "v", false, "Verbose output")
 
 	flag.Parse()
 }
@@ -87,12 +88,20 @@ func detectPort(url url.URL) int {
 }
 
 func patchRequest(request *http.Request, config *HostConfig) {
+	if config.OverrideScheme {
+		request.URL.Scheme = "https"
+	}
+
 	if config.OverrideHost {
 		request.Header.Set("Host", request.Host)
 	}
 
 	if config.TargetHost != "" {
 		request.URL.Host = config.TargetHost
+	}
+
+	if config.UserAgent != "" {
+		request.Header.Set("User-Agent", config.UserAgent)
 	}
 }
 
@@ -118,6 +127,7 @@ func main() {
 			AppConfig: escherProxyConfig,
 			Client:    &http.Client{},
 		}
+
 		if appConfig.TargetUrl != "" {
 			request.Header.Set("X-Target-Url", appConfig.TargetUrl)
 		}
@@ -125,45 +135,31 @@ func main() {
 		webRequestHandler.Handle(request, responseWriter)
 	})
 	proxy.OnRequest().DoFunc(func(request *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		hostConfig := appConfig.FindHostConfig(request.URL.Host)
+		host := request.URL.Host
+		hostConfig := appConfig.FindHostConfig(host)
+
+		if appConfig.Verbose {
+			log.Println("Host", host)
+			log.Println("Request", request)
+			log.Println("Config", hostConfig)
+		}
 
 		if hostConfig != nil {
 			patchRequest(request, hostConfig)
 
-			if appConfig.Verbose {
-				log.Println("Host", request.URL.Host)
-				log.Println("Request", request)
-				log.Println("Config", hostConfig)
-			}
-
 			return request, nil
 		}
 
-		if request.URL.Port() == "" {
-			port := detectPort(*request.URL)
-			hostWithPort := fmt.Sprintf("%s:%d", request.URL.Host, port)
-			hostConfig = appConfig.FindHostConfig(hostWithPort)
-
-			if hostConfig != nil {
-				patchRequest(request, hostConfig)
-
-				if appConfig.Verbose {
-					log.Println("Host", hostWithPort)
-					log.Println("Request", request)
-					log.Println("Config", hostConfig)
-				}
-
-				return request, nil
-			}
-		}
-
 		if appConfig.Verbose {
-			log.Println("Original Request", request)
+			log.Println("Request is not patched", request)
 		}
 
 		return request, nil
 	})
 
 	log.Println("F0rward Pr0xy " + Version + " | Listening on: " + appConfig.ListenAddress)
-	log.Fatal(http.ListenAndServe(appConfig.ListenAddress, proxy))
+	if appConfig.Verbose {
+		log.Println("ConfigFile", configFile)
+	}
+	log.Fatalln(http.ListenAndServe(appConfig.ListenAddress, proxy))
 }
