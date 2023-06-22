@@ -56,6 +56,7 @@ jobs:
           docker buildx build \
             . \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg APP_VERSION=$VERSION \
             --cache-from ${{ env.IMAGE_NAME }}:latest \
             --platform ${{ env.PLATFORMS }} \
             --target packed \

@@ -9,9 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"strconv"
 )
 
 type AppConfig struct {
@@ -69,22 +67,6 @@ func readFromFile(file string) []byte {
 	jsonData, _ := io.ReadAll(jsonFile)
 
 	return jsonData
-}
-
-func detectPort(url url.URL) int {
-	port := url.Port()
-
-	if port != "" {
-		portNumber, _ := strconv.Atoi(port)
-
-		return portNumber
-	}
-
-	if url.Scheme == "https" {
-		return 443
-	}
-
-	return 80
 }
 
 func patchRequest(request *http.Request, config *HostConfig) {
